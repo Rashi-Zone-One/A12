@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPMN Universe: Complete Business Process</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Inter:wght@400;600&display=swap');
+        
+        body { font-family: 'Sarabun', sans-serif; background-color: #f1f5f9; }
+        .font-eng { font-family: 'Inter', sans-serif; }
+
+        /* --- Diagram Container --- */
+        .diagram-wrapper {
+            overflow: auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            height: 90vh;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .bpmn-container {
+            position: relative;
+            min-width: 4200px; /* Universe Width */
+            height: 1000px; /* 5 Lanes */
+            display: grid;
+            /* Customer, System, Finance, Warehouse, Logistics */
+            grid-template-rows: 180px 250px 180px 220px 170px; 
+            gap: 1rem;
+            margin: 0 auto;
+        }
+
+        /* --- Swimlanes --- */
+        .swimlane {
+            position: relative;
+            border-left: 40px solid;
+            background: rgba(255,255,255,0.7);
+            border-top: 1px dashed #cbd5e1;
+            border-bottom: 1px dashed #cbd5e1;
+            border-right: 1px solid #cbd5e1;
+        }
+        .lane-customer { border-left-color: #3b82f6; background-color: #eff6ff; }
+        .lane-system { border-left-color: #a855f7; background-color: #faf5ff; }
+        .lane-finance { border-left-color: #14b8a6; background-color: #f0fdfa; } /* Teal */
+        .lane-warehouse { border-left-color: #f97316; background-color: #fff7ed; }
+        .lane-logistics { border-left-color: #64748b; background-color: #f8fafc; } /* Slate */
+
+        .lane-label {
+            position: absolute;
+            left: -35px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            color: white;
+            white-space: nowrap;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        /* --- Nodes --- */
+        .node {
+            position: absolute;
+            background: white;
+            border: 2px solid #cbd5e1;
+            border-radius: 0.6rem;
+            padding: 0.5rem;
+            width: 140px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            z-index: 10;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+        
+        .node:hover { transform: scale(1.1); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-color: #475569; z-index: 50; cursor: pointer; }
+
+        .node-title { font-weight: bold; font-size: 0.75rem; color: #1e293b; line-height: 1.2; }
+        .node-desc { font-size: 0.6rem; color: #64748b; }
+
+        .start-node, .end-node { width: 50px; height: 50px; border-radius: 50%; padding: 0; justify-content: center; border-width: 4px; }
+        .gateway-node { width: 60px; height: 60px; transform: rotate(45deg); padding: 0; border-radius: 6px; justify-content: center; }
+        .gateway-content { transform: rotate(-45deg); display: flex; flex-direction: column; align-items: center; }
+
+        /* --- Data Objects --- */
+        .data-object {
+            position: absolute;
+            background: white;
+            border: 1px solid #94a3b8;
+            width: 32px;
+            height: 42px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            border-radius: 2px 10px 2px 2px;
+        }
+        .data-label {
+            position: absolute;
+            top: 44px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.6rem;
+            color: #475569;
+            font-weight: 600;
+            white-space: nowrap;
+            background: rgba(255,255,255,0.9);
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+
+        /* --- Database Icon --- */
+        .db-store {
+            position: absolute;
+            width: 44px;
+            height: 54px;
+            border: 2px solid #64748b;
+            border-radius: 0 0 12px 12px;
+            border-top: none;
+            background: white;
+            z-index: 5;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .db-store::before {
+            content: '';
+            position: absolute;
+            top: -12px; left: -2px;
+            width: 44px; height: 20px;
+            border: 2px solid #64748b;
+            border-radius: 50%;
+            background: white;
+        }
+        .db-label {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #334155;
+            white-space: nowrap;
+        }
+
+        /* --- Colors --- */
+        .border-blue { border-color: #3b82f6; color: #1e40af; }
+        .border-purple { border-color: #a855f7; color: #6b21a8; }
+        .border-orange { border-color: #f97316; color: #9a3412; }
+        .border-teal { border-color: #14b8a6; color: #0f766e; }
+        .border-slate { border-color: #64748b; color: #334155; }
+        
+        .bg-green { background-color: #dcfce7; border-color: #16a34a; color: #14532d; }
+        .bg-red { background-color: #fee2e2; border-color: #ef4444; color: #7f1d1d; }
+        .bg-yellow { background-color: #fef9c3; border-color: #ca8a04; color: #854d0e; }
+
+        /* --- Connectors (Lines) --- */
+        .line {
+            position: absolute;
+            background-color: #94a3b8;
+            height: 2px;
+            z-index: 1;
+            transform-origin: left center;
+        }
+        .line-v { width: 2px; background-color: #94a3b8; z-index: 1; position: absolute; }
+        .line-dashed { border-top: 2px dashed #94a3b8; background: transparent !important; height: 0 !important; }
+        .line-v-dashed { border-left: 2px dashed #94a3b8; background: transparent !important; width: 0 !important; }
+        
+        .arrow-head {
+            position: absolute;
+            right: -6px;
+            top: -4px;
+            width: 0; 
+            height: 0; 
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 8px solid #94a3b8;
+        }
+        
+        /* Annotations & Groups */
+        .group-box {
+            position: absolute;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.3);
+            z-index: 0;
+        }
+        .group-label {
+            position: absolute;
+            top: -12px;
+            left: 10px;
+            background: #f1f5f9;
+            padding: 0 5px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body class="bg-slate-200 min-h-screen py-6 px-4">
+
+    <!-- Header -->
+    <div class="fixed top-0 left-0 w-full bg-white shadow-md z-50 px-6 py-3 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="map" class="text-blue-600"></i> BPMN Universe Edition
+            </h1>
+            <p class="text-xs text-slate-500">Full Business Process Cycle: Order to Cash to Return</p>
+        </div>
+        <div class="flex gap-4 text-xs font-semibold">
+            <span class="text-blue-600">CUSTOMER</span>
+            <span class="text-purple-600">SYSTEM</span>
+            <span class="text-teal-600">FINANCE</span>
+            <span class="text-orange-600">WAREHOUSE</span>
+            <span class="text-slate-600">LOGISTICS</span>
+        </div>
+    </div>
+
+    <!-- Spacer for fixed header -->
+    <div class="h-20"></div>
+
+    <!-- Main Diagram -->
+    <div class="diagram-wrapper custom-scroll">
+        <div class="bpmn-container">
+            
+            <!-- ==========================================
+                 LANE 1: CUSTOMER (Top)
+            ========================================== -->
+            <div class="swimlane lane-customer">
+                <span class="lane-label">Customer</span>
+                
+                <!-- START -->
+                <div class="node start-node bg-green" style="top: 65px; left: 30px;">
+                    <i data-lucide="power" class="w-6 h-6 ml-0.5"></i>
+                </div>
+                <div class="absolute top-[125px] left-[25px] text-xs font-bold text-slate-500">START</div>
+
+                <!-- 1. Browse -->
+                <div class="node border-blue" style="top: 55px; left: 150px;">
+                    <span class="node-title">เข้าชมเว็บไซต์</span>
+                    <span class="node-desc">Browse Catalog</span>
+                </div>
+
+                <!-- 2. Add Cart -->
+                <div class="node border-blue" style="top: 55px; left: 320px;">
+                    <i data-lucide="shopping-cart" class="w-4 h-4 mb-1 text-blue-600"></i>
+                    <span class="node-title">หยิบลงตะกร้า</span>
+                    <span class="node-desc">Add to Cart</span>
+                </div>
+
+                <!-- 3. Checkout -->
+                <div class="node border-blue" style="top: 55px; left: 700px;">
+                    <span class="node-title">สั่งซื้อ (Checkout)</span>
+                    <span class="node-desc">Confirm Address</span>
+                </div>
+
+                <!-- 5. Pay -->
+                <div class="node border-blue" style="top: 55px; left: 1600px;">
+                    <i data-lucide="smartphone" class="w-4 h-4 mb-1 text-blue-600"></i>
+                    <span class="node-title">ยืนยันจ่ายเงิน</span>
+                    <span class="node-desc">Mobile Banking</span>
+                </div>
+
+                <!-- 9. Receive -->
+                <div class="node border-blue" style="top: 55px; left: 3100px;">
+                    <i data-lucide="package-check" class="w-4 h-4 mb-1 text-blue-600"></i>
+                    <span class="node-title">รับสินค้า</span>
+                    <span class="node-desc">Sign on Glass</span>
+                </div>
+
+                <!-- 10. Review/Return Gateway -->
+                <div class="node gateway-node bg-white border-2 border-blue-400" style="top: 65px; left: 3300px;">
+                    <div class="gateway-content"><i data-lucide="help-circle" class="w-5 h-5 text-blue-500"></i></div>
+                </div>
+                <div class="absolute top-[130px] left-[3290px] text-[10px] font-bold text-slate-500">พอใจไหม?</div>
+
+                <!-- 11. Review (Happy) -->
+                <div class="node border-blue" style="top: 55px; left: 3450px;">
+                    <i data-lucide="star" class="w-4 h-4 mb-1 text-yellow-500"></i>
+                    <span class="node-title">รีวิว 5 ดาว</span>
+                    <span class="node-desc">Submit Review</span>
+                </div>
+
+                <!-- 12. Return Request (Unhappy) -->
+                <div class="node border-blue" style="top: 130px; left: 3450px; border-style: dashed;">
+                    <i data-lucide="corner-up-left" class="w-4 h-4 mb-1 text-slate-500"></i>
+                    <span class="node-title">ขอคืนเงิน</span>
+                    <span class="node-desc">Return Request</span>
+                </div>
+
+                <!-- END -->
+                <div class="node end-node bg-green" style="top: 65px; left: 3950px;">
+                    <i data-lucide="check" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <!-- ==========================================
+                 LANE 2: SYSTEM (Core Platform)
+            ========================================== -->
+            <div class="swimlane lane-system">
+                <span class="lane-label">System Platform</span>
+
+                <!-- Group: Pre-Order -->
+                <div class="group-box" style="top: 20px; left: 480px; width: 400px; height: 180px;"></div>
+                <div class="group-label" style="top: 8px; left: 490px;">Inventory Management</div>
+
+                <!-- 2.1 Auth -->
+                <div class="node border-purple" style="top: 50px; left: 500px;">
+                    <i data-lucide="shield" class="w-4 h-4 mb-1 text-purple-600"></i>
+                    <span class="node-title">ยืนยันตัวตน</span>
+                    <span class="node-desc">Auth Token</span>
+                </div>
+
+                <!-- 3.1 Validate & Stock -->
+                <div class="node border-purple" style="top: 50px; left: 680px;">
+                    <i data-lucide="database" class="w-4 h-4 mb-1 text-purple-600"></i>
+                    <span class="node-title">เช็คสต็อก</span>
+                    <span class="node-desc">Query DB</span>
+                </div>
+
+                <!-- DB: Inventory -->
+                <div class="db-store" style="top: 150px; left: 725px;"></div>
+                <div class="db-label" style="top: 210px; left: 735px;">Inventory DB</div>
+
+                <!-- Gateway: Stock? -->
+                <div class="node gateway-node bg-white border-2 border-orange-400" style="top: 65px; left: 880px;">
+                    <div class="gateway-content"><i data-lucide="package" class="w-5 h-5 text-orange-500"></i></div>
+                </div>
+                <div class="absolute top-[130px] left-[870px] text-[10px] font-bold text-slate-500">มีของ?</div>
+
+                <!-- 4. Reserve (Yes) -->
+                <div class="node border-purple" style="top: 50px; left: 1050px;">
+                    <i data-lucide="lock" class="w-4 h-4 mb-1 text-purple-600"></i>
+                    <span class="node-title">จองสินค้า</span>
+                    <span class="node-desc">Lock Qty</span>
+                </div>
+
+                <!-- Low Stock Alert -->
+                <div class="node border-orange" style="top: 150px; left: 950px; width: 100px; border-style: dashed;">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 mb-1 text-orange-500"></i>
+                    <span class="node-title text-orange-600">แจ้งเตือน (Low)</span>
+                </div>
+
+                <!-- Fraud Check (NEW) -->
+                <div class="node border-purple" style="top: 50px; left: 1250px;">
+                    <i data-lucide="eye" class="w-4 h-4 mb-1 text-purple-600"></i>
+                    <span class="node-title">Fraud Check</span>
+                    <span class="node-desc">Risk Scoring</span>
+                </div>
+
+                <!-- 7. Order Status Update -->
+                <div class="node border-purple" style="top: 50px; left: 2300px;">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 mb-1 text-purple-600"></i>
+                    <span class="node-title">สถานะ: รอส่ง</span>
+                    <span class="node-desc">Update DB</span>
+                </div>
+
+                <!-- 8. Tracking Gen -->
+                <div class="node border-purple" style="top: 50px; left: 2500px;">
+                    <i data-lucide="qr-code" class="w-4 h-4 mb-1 text-purple-600"></i>
+                    <span class="node-title">สร้าง Tracking</span>
+                    <span class="node-desc">Gen Label</span>
+                </div>
+
+                <!-- 11.1 Loyalty Calc -->
+                <div class="node border-purple" style="top: 50px; left: 3650px;">
+                    <i data-lucide="coins" class="w-4 h-4 mb-1 text-purple-600"></i>
+                    <span class="node-title">คำนวณแต้ม</span>
+                    <span class="node-desc">Add Points</span>
+                </div>
+
+                <!-- 12.1 RMA Process (Return) -->
+                <div class="node border-red" style="top: 150px; left: 3650px;">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4 mb-1 text-red-600"></i>
+                    <span class="node-title">อนุมัติคืนของ</span>
+                    <span class="node-desc">RMA System</span>
+                </div>
+
+                <!-- Notify Fail -->
+                <div class="node border-red" style="top: 180px; left: 1050px;">
+                    <i data-lucide="bell-off" class="w-4 h-4 mb-1 text-red-600"></i>
+                    <span class="node-title">แจ้งสินค้าหมด</span>
+                </div>
+
+                <!-- DB: CRM -->
+                <div class="db-store" style="top: 150px; left: 3850px;"></div>
+                <div class="db-label" style="top: 210px; left: 3860px;">CRM DB</div>
+
+            </div>
+
+            <!-- ==========================================
+                 LANE 3: FINANCE (Accounting & Gateway)
+            ========================================== -->
+            <div class="swimlane lane-finance">
+                <span class="lane-label">Finance / Bank</span>
+
+                <!-- 6. Payment Gateway -->
+                <div class="node border-teal" style="top: 40px; left: 1450px;">
+                    <i data-lucide="landmark" class="w-4 h-4 mb-1 text-teal-600"></i>
+                    <span class="node-title">ตัดบัตรเครดิต</span>
+                    <span class="node-desc">External API</span>
+                </div>
+
+                <!-- Gateway: Payment OK? -->
+                <div class="node gateway-node bg-white border-2 border-teal-400" style="top: 50px; left: 1650px;">
+                    <div class="gateway-content"><i data-lucide="check-circle-2" class="w-5 h-5 text-teal-500"></i></div>
+                </div>
+                <div class="absolute top-[115px] left-[1640px] text-[10px] font-bold text-slate-500">ผ่าน?</div>
+
+                <!-- 6.1 Issue Invoice -->
+                <div class="node border-teal" style="top: 40px; left: 1850px;">
+                    <i data-lucide="file-check" class="w-4 h-4 mb-1 text-teal-600"></i>
+                    <span class="node-title">ออกใบกำกับภาษี</span>
+                    <span class="node-desc">e-Tax Invoice</span>
+                </div>
+
+                <!-- GL Recording -->
+                <div class="node border-teal" style="top: 110px; left: 2050px;">
+                    <i data-lucide="book-open" class="w-4 h-4 mb-1 text-teal-600"></i>
+                    <span class="node-title">บันทึกบัญชี (GL)</span>
+                    <span class="node-desc">Auto-Post</span>
+                </div>
+
+                <!-- 12.2 Refund -->
+                <div class="node border-red" style="top: 110px; left: 3850px;">
+                    <i data-lucide="banknote" class="w-4 h-4 mb-1 text-red-600"></i>
+                    <span class="node-title">คืนเงิน (Refund)</span>
+                    <span class="node-desc">Credit Note</span>
+                </div>
+
+                <!-- Retry Loop Node -->
+                <div class="node border-orange" style="top: 110px; left: 1450px; border-style: dashed;">
+                    <span class="node-title">ขอจ่ายใหม่</span>
+                    <span class="node-desc">Retry Logic</span>
+                </div>
+            </div>
+
+            <!-- ==========================================
+                 LANE 4: WAREHOUSE (Fulfillment)
+            ========================================== -->
+            <div class="swimlane lane-warehouse">
+                <span class="lane-label">Warehouse</span>
+
+                <!-- 8.1 WMS Input -->
+                <div class="node border-orange" style="top: 60px; left: 2300px;">
+                    <i data-lucide="download-cloud" class="w-4 h-4 mb-1 text-orange-600"></i>
+                    <span class="node-title">รับออเดอร์ (WMS)</span>
+                </div>
+
+                <!-- 8.2 Pick -->
+                <div class="node border-orange" style="top: 60px; left: 2500px;">
+                    <i data-lucide="hand" class="w-4 h-4 mb-1 text-orange-600"></i>
+                    <span class="node-title">หยิบสินค้า (Pick)</span>
+                    <span class="node-desc">Zone A</span>
+                </div>
+
+                <!-- 8.3 QC -->
+                <div class="node border-orange" style="top: 60px; left: 2700px;">
+                    <i data-lucide="scan-barcode" class="w-4 h-4 mb-1 text-orange-600"></i>
+                    <span class="node-title">QC Scan</span>
+                    <span class="node-desc">Verify Product</span>
+                </div>
+
+                <!-- 8.4 Pack -->
+                <div class="node border-orange" style="top: 60px; left: 2900px;">
+                    <i data-lucide="package" class="w-4 h-4 mb-1 text-orange-600"></i>
+                    <span class="node-title">แพ็คลงกล่อง</span>
+                    <span class="node-desc">Packing</span>
+                </div>
+
+                <!-- Re-stock Process (From Supplier) -->
+                <div class="node border-orange" style="top: 60px; left: 1050px; border-style: dotted;">
+                    <i data-lucide="archive-restore" class="w-4 h-4 mb-1 text-orange-600"></i>
+                    <span class="node-title">รับของเข้าคลัง</span>
+                    <span class="node-desc">Inbound</span>
+                </div>
+            </div>
+
+            <!-- ==========================================
+                 LANE 5: LOGISTICS & SUPPLIER
+            ========================================== -->
+            <div class="swimlane lane-logistics">
+                <span class="lane-label">Logistics / Ext</span>
+
+                <!-- Supplier Ship -->
+                <div class="node border-slate" style="top: 40px; left: 910px; border-style: dotted;">
+                    <i data-lucide="container" class="w-4 h-4 mb-1 text-slate-600"></i>
+                    <span class="node-title">Supplier Ship</span>
+                    <span class="node-desc">Re-stock</span>
+                </div>
+
+                <!-- 9.1 Handover -->
+                <div class="node border-slate" style="top: 40px; left: 2900px;">
+                    <i data-lucide="truck" class="w-4 h-4 mb-1 text-slate-600"></i>
+                    <span class="node-title">รับพัสดุ</span>
+                    <span class="node-desc">Carrier Pickup</span>
+                </div>
+
+                <!-- 9.2 Hub Sorting -->
+                <div class="node border-slate" style="top: 40px; left: 3100px;">
+                    <i data-lucide="git-merge" class="w-4 h-4 mb-1 text-slate-600"></i>
+                    <span class="node-title">คัดแยกสินค้า</span>
+                    <span class="node-desc">Distribution Hub</span>
+                </div>
+
+                <!-- 9.3 Delivery -->
+                <div class="node border-slate" style="top: 40px; left: 3300px;">
+                    <i data-lucide="bike" class="w-4 h-4 mb-1 text-slate-600"></i>
+                    <span class="node-title">นำส่งปลายทาง</span>
+                    <span class="node-desc">Last Mile</span>
+                </div>
+
+                <!-- 12.3 Reverse Logistics -->
+                <div class="node border-red" style="top: 40px; left: 3650px; border-style: dashed;">
+                    <i data-lucide="undo-2" class="w-4 h-4 mb-1 text-red-600"></i>
+                    <span class="node-title">รับของคืน</span>
+                    <span class="node-desc">Reverse Logistics</span>
+                </div>
+            </div>
+
+            <!-- ==========================================
+                 CONNECTIONS (Lines & Arrows)
+            ========================================== -->
+            
+            <!-- Start -> Browse -->
+            <div class="line" style="width: 70px; top: 90px; left: 80px;"><div class="arrow-head"></div></div>
+            <!-- Browse -> Add -->
+            <div class="line" style="width: 30px; top: 90px; left: 290px;"><div class="arrow-head"></div></div>
+            <!-- Add -> Checkout -->
+            <div class="line" style="width: 240px; top: 90px; left: 460px;"><div class="arrow-head"></div></div>
+            
+            <!-- Checkout -> Auth (Down) -->
+            <div class="line-v" style="height: 140px; top: 90px; left: 570px;"></div>
+            <div class="line" style="width: 10px; top: 230px; left: 560px; transform: rotate(180deg);"><div class="arrow-head"></div></div>
+
+            <!-- Auth -> Validate -->
+            <div class="line" style="width: 40px; top: 230px; left: 640px;"><div class="arrow-head"></div></div>
+            <!-- Validate -> Check Stock -->
+            <div class="line" style="width: 30px; top: 230px; left: 820px;"><div class="arrow-head"></div></div>
+            <!-- Check Stock -> Gateway -->
+            <div class="line" style="width: 60px; top: 230px; left: 820px;"></div> <!-- to gateway visual adjustment -->
+
+            <!-- Gateway -> YES (Reserve) -->
+            <div class="line" style="width: 110px; top: 240px; left: 940px; border-top: 2px solid #22c55e;"><div class="arrow-head" style="border-left-color: #22c55e;"></div></div>
+            <span class="absolute text-[10px] font-bold text-green-600 bg-white px-1 z-20" style="top: 230px; left: 960px;">YES</span>
+
+            <!-- Reserve -> Fraud Check -->
+            <div class="line" style="width: 60px; top: 240px; left: 1190px;"><div class="arrow-head"></div></div>
+
+            <!-- Fraud -> Pay (Down to Finance) -->
+            <div class="line-v" style="height: 200px; top: 280px; left: 1320px;"></div>
+            <div class="line" style="width: 130px; top: 480px; left: 1320px;"><div class="arrow-head"></div></div>
+
+            <!-- Finance Pay -> Customer Pay (Up Action) -->
+            <div class="line-v" style="height: 400px; top: 90px; left: 1520px; border-left: 2px dotted #94a3b8;"></div> <!-- Action Signal -->
+            
+            <!-- Pay -> Gateway Finance -->
+            <div class="line" style="width: 60px; top: 480px; left: 1590px;"><div class="arrow-head"></div></div>
+
+            <!-- Gateway Finance -> YES (Invoice) -->
+            <div class="line" style="width: 140px; top: 480px; left: 1710px; border-top: 2px solid #22c55e;"><div class="arrow-head" style="border-left-color: #22c55e;"></div></div>
+            <span class="absolute text-[10px] font-bold text-green-600 bg-white px-1 z-20" style="top: 470px; left: 1750px;">PASS</span>
+
+            <!-- Invoice -> GL -->
+            <div class="line-v" style="height: 40px; top: 520px; left: 1920px;"></div>
+            <div class="line" style="width: 130px; top: 560px; left: 1920px;"><div class="arrow-head"></div></div>
+
+            <!-- Invoice -> Status Update (Up to System) -->
+            <div class="line-v" style="height: 240px; top: 240px; left: 1990px;"></div> <!-- Up line -->
+            <div class="line" style="width: 310px; top: 240px; left: 1990px;"><div class="arrow-head"></div></div> <!-- Right to Status -->
+
+            <!-- Status -> WMS (Down) -->
+            <div class="line-v" style="height: 380px; top: 280px; left: 2370px;"></div>
+            <div class="line" style="width: 10px; top: 660px; left: 2365px; transform: rotate(180deg);"><div class="arrow-head"></div></div>
+
+            <!-- WMS -> Pick -->
+            <div class="line" style="width: 60px; top: 660px; left: 2440px;"><div class="arrow-head"></div></div>
+            <!-- Pick -> QC -->
+            <div class="line" style="width: 60px; top: 660px; left: 2640px;"><div class="arrow-head"></div></div>
+            <!-- QC -> Pack -->
+            <div class="line" style="width: 60px; top: 660px; left: 2840px;"><div class="arrow-head"></div></div>
+            
+            <!-- Pack -> Logistics Handover (Down) -->
+            <div class="line-v" style="height: 140px; top: 700px; left: 2970px;"></div>
+            <div class="line" style="width: 10px; top: 840px; left: 2965px; transform: rotate(180deg);"><div class="arrow-head"></div></div>
+
+            <!-- Logistics Flow -->
+            <div class="line" style="width: 60px; top: 840px; left: 3040px;"><div class="arrow-head"></div></div>
+            <div class="line" style="width: 60px; top: 840px; left: 3240px;"><div class="arrow-head"></div></div>
+
+            <!-- Delivery -> Customer Receive (Up) -->
+            <div class="line-v" style="height: 750px; top: 90px; left: 3370px;"></div>
+            <div class="line" style="width: 10px; top: 90px; left: 3365px; transform: rotate(180deg);"><div class="arrow-head"></div></div> <!-- To Receive Node -->
+            <div class="line" style="width: 50px; top: 90px; left: 3240px; transform: rotate(180deg);"><div class="arrow-head"></div></div>
+
+            <!-- Receive -> Gateway Review -->
+            <div class="line" style="width: 60px; top: 90px; left: 3240px;"><div class="arrow-head"></div></div>
+
+            <!-- Review Gateway -> Happy (Review) -->
+            <div class="line" style="width: 90px; top: 90px; left: 3360px; border-top: 2px solid #22c55e;"><div class="arrow-head" style="border-left-color: #22c55e;"></div></div>
+            
+            <!-- Review -> Points (Down) -->
+            <div class="line-v" style="height: 140px; top: 90px; left: 3520px;"></div>
+            <div class="line" style="width: 130px; top: 230px; left: 3520px;"><div class="arrow-head"></div></div>
+
+            <!-- Review Gateway -> Return (Down) -->
+            <div class="line-v" style="height: 70px; top: 95px; left: 3330px; border-left: 2px dashed #ef4444;"></div>
+            <div class="line" style="width: 120px; top: 165px; left: 3330px; border-top: 2px dashed #ef4444;"><div class="arrow-head" style="border-left-color: #ef4444;"></div></div>
+
+            <!-- Return -> System Approval -->
+            <div class="line" style="width: 60px; top: 165px; left: 3590px;"><div class="arrow-head"></div></div>
+            <!-- Approval -> Logistics Reverse (Down) -->
+            <div class="line-v" style="height: 640px; top: 190px; left: 3720px;"></div>
+            <div class="line" style="width: 10px; top: 830px; left: 3715px; transform: rotate(180deg);"><div class="arrow-head"></div></div>
+
+            <!-- Re-stock Logic (Supplier -> Warehouse) -->
+            <div class="line-v" style="height: 140px; top: 700px; left: 1120px; border-left: 2px dotted #f97316;"></div>
+            <div class="line" style="width: 10px; top: 840px; left: 1000px; border-top: 2px dotted #f97316;"><div class="arrow-head" style="border-left-color: #f97316;"></div></div>
+            <div class="line-v" style="height: 40px; top: 800px; left: 1000px; border-left: 2px dotted #f97316;"></div>
+
+            <!-- ==========================================
+                 DATA OBJECTS & ALERTS
+            ========================================== -->
+            
+            <!-- Invoice Doc -->
+            <div class="data-object" style="top: 470px; left: 1950px;">
+                <i data-lucide="file-check" class="w-4 h-4 text-teal-600"></i>
+                <span class="data-label">Tax Inv</span>
+            </div>
+
+            <!-- Pick List -->
+            <div class="data-object" style="top: 640px; left: 2450px;">
+                <i data-lucide="clipboard-list" class="w-4 h-4 text-orange-600"></i>
+                <span class="data-label">Pick List</span>
+            </div>
+
+            <!-- Payment Slip -->
+            <div class="data-object" style="top: 270px; left: 1350px;">
+                <i data-lucide="receipt" class="w-4 h-4 text-blue-600"></i>
+                <span class="data-label">Slip</span>
+            </div>
+
+            <!-- Alerts -->
+            <div class="absolute z-20 top-[320px] left-[1020px] bg-orange-100 text-orange-700 px-2 py-1 rounded text-[9px] font-bold border border-orange-300 shadow-sm">
+                Auto-PO
+            </div>
+
+            <div class="absolute z-20 top-[520px] left-[3900px] bg-teal-100 text-teal-700 px-2 py-1 rounded text-[9px] font-bold border border-teal-300 shadow-sm">
+                Credit Note
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
